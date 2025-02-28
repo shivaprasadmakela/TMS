@@ -16,26 +16,27 @@ import org.springframework.security.web.server.authentication.AuthenticationWebF
 @EnableWebFluxSecurity
 public class SecurityConfig {
 
-    private final JwtAuthenticationManager authenticationManager;
-    private final JwtAuthenticationFilter authenticationFilter;
+    private final JwtAuthenticationManager jwtAuthenticationManager;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    public SecurityConfig(JwtAuthenticationManager authenticationManager, JwtAuthenticationFilter authenticationFilter) {
-        this.authenticationManager = authenticationManager;
-        this.authenticationFilter = authenticationFilter;
+    public SecurityConfig(JwtAuthenticationManager jwtAuthenticationManager, JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.jwtAuthenticationManager = jwtAuthenticationManager;
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
-        AuthenticationWebFilter jwtFilter = new AuthenticationWebFilter(authenticationManager);
-        jwtFilter.setServerAuthenticationConverter(authenticationFilter);
+        AuthenticationWebFilter authenticationWebFilter = new AuthenticationWebFilter(jwtAuthenticationManager);
+        authenticationWebFilter.setServerAuthenticationConverter(jwtAuthenticationFilter);
 
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers("/auth/login", "/auth/register").permitAll()
-                        .pathMatchers("/users/**").authenticated()
+                        .pathMatchers("/auth/**").permitAll()
+                        .pathMatchers("/users").authenticated()
+                        .anyExchange().authenticated()
                 )
-                .addFilterAt(jwtFilter, SecurityWebFiltersOrder.AUTHENTICATION)
+                .addFilterAt(authenticationWebFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .build();
     }
 

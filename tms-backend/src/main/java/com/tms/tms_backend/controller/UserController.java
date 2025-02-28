@@ -1,5 +1,6 @@
 package com.tms.tms_backend.controller;
 
+import com.tms.tms_backend.dto.UserDTO;
 import com.tms.tms_backend.model.User;
 import com.tms.tms_backend.service.UserService;
 import org.springframework.web.bind.annotation.*;
@@ -15,23 +16,23 @@ public class UserController {
         this.userService = userService;
     }
 
-    @PostMapping("/register")
+    @PostMapping()
     public Mono<User> registerUser(@RequestBody User user) {
         return userService.registerUser(user);
     }
 
     @GetMapping
-    public Flux<User> getAllUsers() {
+    public Flux<UserDTO> getAllUsers() {
         return userService.getAllUsers();
     }
 
     @GetMapping("/{id}")
-    public Mono<User> getUserById(@PathVariable Long id) {
-        return userService.getUserById(id);
+    public Mono<UserDTO> getUserById(@PathVariable Long id) {
+        return userService.getUserById(String.valueOf(id));
     }
 
     @DeleteMapping("/{id}")
     public Mono<Void> deleteUser(@PathVariable Long id) {
-        return userService.deleteUser(id);
+        return userService.deleteUser(id).then();
     }
 }

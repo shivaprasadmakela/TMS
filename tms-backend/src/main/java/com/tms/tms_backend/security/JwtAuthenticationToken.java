@@ -2,19 +2,18 @@ package com.tms.tms_backend.security;
 
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 
 import java.util.Collection;
 
 public class JwtAuthenticationToken extends AbstractAuthenticationToken {
-    private final Object principal;
-    private String token;
+    private final String email;
+    private final String token;
 
-    public JwtAuthenticationToken(User principal, String token, Collection<? extends GrantedAuthority> authorities) {
+    public JwtAuthenticationToken(String email, String token, Collection<? extends GrantedAuthority> authorities) {
         super(authorities);
-        this.principal = principal;
+        this.email = email;
         this.token = token;
-        setAuthenticated(principal != null);
+        setAuthenticated(email != null); // Set authenticated if email is present
     }
 
     @Override
@@ -24,6 +23,6 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
 
     @Override
     public Object getPrincipal() {
-        return principal;
+        return email;
     }
 }

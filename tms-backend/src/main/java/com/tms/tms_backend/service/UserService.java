@@ -1,5 +1,6 @@
 package com.tms.tms_backend.service;
 
+import com.tms.tms_backend.dto.UserDTO;
 import com.tms.tms_backend.model.User;
 import com.tms.tms_backend.repository.UserRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -19,7 +20,7 @@ public class UserService {
     }
 
     public Mono<User> registerUser(User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword())); // Hash password
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
     }
 
@@ -31,15 +32,21 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public Flux<User> getAllUsers() {
-        return userRepository.findAll();
+    public Flux<UserDTO> getAllUsers() {
+        return userRepository.findAll()
+                .map(this::convertToDTO);
     }
 
-    public Mono<User> getUserById(Long id) {
-        return userRepository.findById(id);
+    public Mono<UserDTO> getUserById(String id) {
+        return userRepository.findById(id)
+                .map(this::convertToDTO);
     }
 
-    public Mono<Void> deleteUser(Long id) {
-        return userRepository.deleteById(id);
+    public Mono<Boolean> deleteUser(Long id) {
+        return userRepository.deleteById(String.valueOf(id)).hasElement();
+    }
+
+    private UserDTO convertToDTO(User user) {
+        return new UserDTO(user.getId(), user.getEmail(), user.getRole(), user.getCreatedAt());
     }
 }
