@@ -25,13 +25,13 @@ public class JwtAuthenticationFilter implements ServerAuthenticationConverter {
             return Mono.empty();
         }
 
-        String token = authHeader.substring(7); // Extract JWT token
+        String token = authHeader.substring(7);
         String email = jwtUtil.extractEmail(token);
 
         if (email == null || jwtUtil.validateToken(token)) {
             return Mono.empty();
         }
 
-        return Mono.just(new JwtAuthenticationToken(email, token, null)); // No roles yet, add if needed
+        return Mono.just(new JwtAuthenticationToken(email, token, null));
     }
 }

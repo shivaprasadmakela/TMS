@@ -13,7 +13,7 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
         super(authorities);
         this.email = email;
         this.token = token;
-        setAuthenticated(email != null); // Set authenticated if email is present
+        setAuthenticated(email != null);
     }
 
     @Override
