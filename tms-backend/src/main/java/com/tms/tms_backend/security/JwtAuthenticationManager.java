@@ -26,13 +26,12 @@ public class JwtAuthenticationManager implements ReactiveAuthenticationManager {
         String token = authentication.getCredentials().toString();
         String email = jwtUtil.extractEmail(token);
 
-        // ✅ Fix: Corrected token validation
         if (email == null || !jwtUtil.validateToken(token)) {
             return Mono.error(new BadCredentialsException("Invalid JWT Token"));
         }
 
         String role = jwtUtil.extractRole(token);
-        List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role));
+        List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
 
         return Mono.just(new JwtAuthenticationToken(email, token, authorities));
     }

@@ -31,9 +31,6 @@ public class UserService {
         this.jwtUtil = jwtUtil;
     }
 
-    /**
-     * Registers a new user.
-     */
     public Mono<UserDTO> register(User user) {
         return Mono.just(user)
                 .flatMap(u -> {
@@ -52,9 +49,7 @@ public class UserService {
                 .onErrorResume(e -> Mono.error(new RuntimeException("Registration failed: " + e.getMessage())));
     }
 
-    /**
-     * Registers a new admin and creates a unique client.
-     */
+
     public Mono<UserDTO> registerAdmin(User request) {
         return userRepository.findByEmail(request.getEmail())
                 .flatMap(existingUser -> Mono.error(new IllegalArgumentException("User Already Exists")))
@@ -74,18 +69,16 @@ public class UserService {
                                         );
                                         return userRepository.save(admin)
                                                 .map(this::convertToDTO)
-                                                .cast(UserDTO.class);  // ✅ Ensures return type is Mono<UserDTO>
+                                                .cast(UserDTO.class);
                                     });
                         }))
                 .timeout(Duration.ofSeconds(10))
                 .onErrorResume(e -> Mono.error(new RuntimeException("Admin registration failed: " + e.getMessage())))
-                .cast(UserDTO.class);  // ✅ Ensures final return type is Mono<UserDTO>
+                .cast(UserDTO.class);
     }
 
 
-    /**
-     * Authenticates a user and generates a JWT token.
-     */
+
     public Mono<LoginResponseDTO> login(User user) {
         return userRepository.findByEmail(user.getEmail())
                 .filter(foundUser -> passwordEncoder.matches(user.getPassword(), foundUser.getPassword()))
@@ -107,9 +100,6 @@ public class UserService {
                 .switchIfEmpty(Mono.error(new RuntimeException("Invalid credentials")));
     }
 
-    /**
-     * Retrieves all users for a given client.
-     */
     public Flux<UserDTO> getAllUsers(String clientCode) {
         return ReactiveSecurityContextHolder.getContext()
                 .map(context -> context.getAuthentication().getName()) // ✅ Get the current user's email reactively
@@ -117,18 +107,14 @@ public class UserService {
                 .map(this::convertToDTO);
     }
 
-    /**
-     * Retrieves a single user by ID.
-     */
+
     public Mono<UserDTO> getUserById(Long id) {
         return userRepository.findById(String.valueOf(id))
                 .map(this::convertToDTO)
                 .switchIfEmpty(Mono.error(new RuntimeException("User not found")));
     }
 
-    /**
-     * Updates a user by ID.
-     */
+
     public Mono<UserDTO> updateUser(Long id, User user) {
         return userRepository.findById(String.valueOf(id))
                 .flatMap(existingUser -> {
@@ -142,9 +128,7 @@ public class UserService {
                 .map(this::convertToDTO);
     }
 
-    /**
-     * Deletes a user by ID.
-     */
+
     public Mono<Boolean> deleteUser(Long id) {
         return userRepository.findById(String.valueOf(id))
                 .flatMap(existingUser -> userRepository.delete(existingUser).thenReturn(true))
@@ -152,18 +136,14 @@ public class UserService {
                 .onErrorResume(e -> Mono.error(new RuntimeException("Delete failed: " + e.getMessage())));
     }
 
-    /**
-     * Finds a user by email.
-     */
+
     public Mono<UserDTO> findByEmail(String email) {
         return userRepository.findByEmail(email)
                 .map(this::convertToDTO)
                 .switchIfEmpty(Mono.error(new RuntimeException("User not found")));
     }
 
-    /**
-     * Converts a User entity to a UserDTO.
-     */
+
     private UserDTO convertToDTO(User user) {
         return new UserDTO(
                 user.getId(),

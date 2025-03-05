@@ -25,26 +25,28 @@ public class UserController {
         return userService.register(user);
     }
 
-    @GetMapping()
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public Flux<UserDTO> getAllUsers(@RequestParam String clientCode) {
-        return userService.getAllUsers(clientCode);
-    }
-
-    @PutMapping("/api/users/{id}/update")  // ✅ More specific path
-    public Mono<UserDTO> updateUser(@PathVariable Long id, @RequestBody User user) {
-        return userService.updateUser(id, user);
-    }
-
-    @GetMapping("/{id}")
-    public Mono<UserDTO> getUserById(@PathVariable Long id) {
-        return userService.getUserById(Long.valueOf(String.valueOf(id)));
-    }
-
     @DeleteMapping("/delete/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public Mono<Void> deleteUser(@PathVariable Long id) {
         return userService.deleteUser(id).then();
+    }
+
+    @PutMapping("/{id}/update")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public Mono<UserDTO> updateUser(@PathVariable Long id, @RequestBody User user) {
+        return userService.updateUser(id, user);
+    }
+
+    @GetMapping()
+    @PreAuthorize("hasRole('ADMIN')")
+    public Flux<UserDTO> getAllUsers(@RequestParam String clientCode) {
+        return userService.getAllUsers(clientCode);
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public Mono<UserDTO> getUserById(@PathVariable Long id) {
+        return userService.getUserById(id);
     }
 
     @GetMapping("/profile")

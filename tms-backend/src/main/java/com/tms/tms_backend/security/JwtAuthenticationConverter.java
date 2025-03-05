@@ -29,7 +29,7 @@ public class JwtAuthenticationConverter implements ServerAuthenticationConverter
                 .map(authHeader -> authHeader.substring(7))
                 .flatMap(token -> {
                     String email = jwtUtil.extractEmail(token);
-                    String role = jwtUtil.extractRole(token); // ✅ Extract role
+                    String role = jwtUtil.extractRole(token);
 
                     if (email == null || !jwtUtil.validateToken(token)) {
                         return Mono.empty();
@@ -37,7 +37,7 @@ public class JwtAuthenticationConverter implements ServerAuthenticationConverter
 
                     List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role));
 
-                    return Mono.just(new JwtAuthenticationToken(email, token, authorities)); // ✅ Pass authorities
+                    return Mono.just(new JwtAuthenticationToken(email, token, authorities));
                 });
     }
 

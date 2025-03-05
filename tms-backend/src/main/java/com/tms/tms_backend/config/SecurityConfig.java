@@ -6,6 +6,7 @@ import com.tms.tms_backend.security.JwtAuthenticationManager;
 import com.tms.tms_backend.security.JwtAuthenticationConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -16,6 +17,7 @@ import org.springframework.security.web.server.authentication.AuthenticationWebF
 
 @Configuration
 @EnableWebFluxSecurity
+@EnableReactiveMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationManager jwtAuthenticationManager;
@@ -38,14 +40,14 @@ public class SecurityConfig {
                         .accessDeniedHandler(new CustomAccessDeniedHandler())
                         .authenticationEntryPoint(new CustomAuthenticationEntryPoint())
                 )
-                .addFilterAt(authenticationWebFilter(), SecurityWebFiltersOrder.AUTHENTICATION) // ✅ Now correctly configured
+                .addFilterAt(authenticationWebFilter(), SecurityWebFiltersOrder.AUTHENTICATION)
                 .build();
     }
 
     @Bean
     public AuthenticationWebFilter authenticationWebFilter() {
         AuthenticationWebFilter authWebFilter = new AuthenticationWebFilter(jwtAuthenticationManager);
-        authWebFilter.setServerAuthenticationConverter(jwtAuthenticationConverter); // ✅ Fixed type mismatch!
+        authWebFilter.setServerAuthenticationConverter(jwtAuthenticationConverter);
         return authWebFilter;
     }
 

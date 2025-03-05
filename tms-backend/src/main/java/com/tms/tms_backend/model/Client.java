@@ -8,8 +8,8 @@ import org.springframework.data.relational.core.mapping.Table;
 import java.time.LocalDateTime;
 
 @Data
-@NoArgsConstructor // ✅ Needed for frameworks
-@AllArgsConstructor // ✅ Constructor for initialization
+@NoArgsConstructor
+@AllArgsConstructor
 @Table("clients")
 public class Client {
     @Id
@@ -17,7 +17,6 @@ public class Client {
     private String code;
     private LocalDateTime createdAt;
 
-    // ✅ Constructor for easy creation
     public Client(String code) {
         this.code = code;
         this.createdAt = LocalDateTime.now();

@@ -9,20 +9,18 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
     private final String email;
     private final String token;
 
-    // Constructor for an unauthenticated token (used before authentication)
     public JwtAuthenticationToken(String token) {
         super(null);
-        this.email = null; // Email is extracted later after validation
+        this.email = null;
         this.token = token;
-        setAuthenticated(false); // 🚀 Marked as NOT authenticated
+        setAuthenticated(false);
     }
 
-    // Constructor for an authenticated token (used after authentication)
     public JwtAuthenticationToken(String email, String token, Collection<? extends GrantedAuthority> authorities) {
         super(authorities);
         this.email = email;
         this.token = token;
-        super.setAuthenticated(true); // ✅ Marked as authenticated
+        super.setAuthenticated(true);
     }
 
     @Override
@@ -35,7 +33,6 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
         return email;
     }
 
-    // 🚀 Prevents setting authentication manually outside the authentication manager
     @Override
     public void setAuthenticated(boolean authenticated) {
         if (authenticated) {

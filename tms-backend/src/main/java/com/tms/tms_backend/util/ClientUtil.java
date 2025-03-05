@@ -7,7 +7,7 @@ import java.util.Random;
 
 public class ClientUtil {
 
-    private static final int MAX_RETRIES = 10; // Prevent infinite recursion
+    private static final int MAX_RETRIES = 10;
     private static final String CHAR_POOL = "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789";
 
     public static Mono<String> generateUniqueCode(String email, ClientRepository clientRepository) {

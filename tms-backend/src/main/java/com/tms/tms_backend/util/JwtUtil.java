@@ -22,7 +22,7 @@ public class JwtUtil {
     public String generateToken(String email, String role, String clientCode) {
         return Jwts.builder()
                 .setSubject(email)
-                .claim("role", role)
+                .claim("role", role.toUpperCase())
                 .claim("clientCode", clientCode)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
@@ -40,7 +40,7 @@ public class JwtUtil {
 
     public boolean validateToken(String token) {
         try {
-            return getClaims(token).getExpiration().after(new Date()); // ✅ Corrected validation logic
+            return getClaims(token).getExpiration().after(new Date());
         } catch (Exception e) {
             return false; // Invalid token
         }
