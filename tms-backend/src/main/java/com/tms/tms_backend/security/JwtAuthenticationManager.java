@@ -5,6 +5,7 @@ import org.springframework.security.authentication.ReactiveAuthenticationManager
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
@@ -25,8 +26,9 @@ public class JwtAuthenticationManager implements ReactiveAuthenticationManager {
         String token = authentication.getCredentials().toString();
         String email = jwtUtil.extractEmail(token);
 
-        if (email == null || jwtUtil.validateToken(token)) {
-            return Mono.empty();
+        // ✅ Fix: Corrected token validation
+        if (email == null || !jwtUtil.validateToken(token)) {
+            return Mono.error(new BadCredentialsException("Invalid JWT Token"));
         }
 
         String role = jwtUtil.extractRole(token);

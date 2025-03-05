@@ -5,20 +5,19 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import lombok.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.util.Base64;
 import java.util.Date;
 import java.util.function.Function;
 
 @Component
 public class JwtUtil {
-    private static final String SECRET_KEY_STRING = "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0a1b2c3d4e5f6g7h8";
+    private static final String RAW_SECRET_KEY = "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0a1b2c3d4e5f6g7h8"; // Same across backend
+    private static final String SECRET_KEY_STRING = Base64.getEncoder().encodeToString(RAW_SECRET_KEY.getBytes()); // Encode
     private static final SecretKey SECRET_KEY = Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET_KEY_STRING));
-    private static final long EXPIRATION_TIME = 86400000;
-
-    private long expirationTime;
+    private static final long EXPIRATION_TIME = 86400000; // 24 hours
 
     public String generateToken(String email, String role, String clientCode) {
         return Jwts.builder()
@@ -40,7 +39,11 @@ public class JwtUtil {
     }
 
     public boolean validateToken(String token) {
-        return !getClaims(token).getExpiration().after(new Date());
+        try {
+            return getClaims(token).getExpiration().after(new Date()); // ✅ Corrected validation logic
+        } catch (Exception e) {
+            return false; // Invalid token
+        }
     }
 
     private Claims getClaims(String token) {
@@ -52,11 +55,6 @@ public class JwtUtil {
     }
 
     private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        Claims claims = Jwts.parser()
-                .setSigningKey(SECRET_KEY)
-                .parseClaimsJws(token)
-                .getBody();
-        return claimsResolver.apply(claims);
+        return claimsResolver.apply(getClaims(token));
     }
-
 }

@@ -1,6 +1,7 @@
 package com.tms.tms_backend.controller;
 
 import com.tms.tms_backend.dto.LoginResponseDTO;
+import com.tms.tms_backend.dto.UserDTO;
 import com.tms.tms_backend.model.User;
 import com.tms.tms_backend.repository.UserRepository;
 import com.tms.tms_backend.service.UserService;
@@ -27,7 +28,7 @@ public class AuthController {
     }
 
     @PostMapping("/register-admin")
-    public Mono<ResponseEntity<String>> registerAdmin(@RequestBody User user) {
+    public Mono<UserDTO> registerAdmin(@RequestBody User user) {
         return userService.registerAdmin(user);
     }
 

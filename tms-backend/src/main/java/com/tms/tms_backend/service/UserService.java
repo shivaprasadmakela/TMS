@@ -9,7 +9,7 @@ import com.tms.tms_backend.repository.UserRepository;
 import com.tms.tms_backend.util.ClientUtil;
 import com.tms.tms_backend.util.JwtUtil;
 import com.tms.tms_backend.util.UserUtil;
-import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -29,54 +29,63 @@ public class UserService {
         this.clientRepository = clientRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
-
     }
 
-    public Mono<ResponseEntity<String>> register(User user) {
+    /**
+     * Registers a new user.
+     */
+    public Mono<UserDTO> register(User user) {
         return Mono.just(user)
                 .flatMap(u -> {
-                    String missingField = UserUtil.validateFields(u, "firstName", "email", "password", "role","clientCode","clientId" );
-                    return missingField != null ?
-                            Mono.error(new IllegalArgumentException("Missing field: " + missingField)) :
-                            Mono.just(u);
+                    String missingField = UserUtil.validateFields(u, "firstName", "email", "password", "role", "clientCode", "clientId");
+                    return missingField != null
+                            ? Mono.error(new IllegalArgumentException("Missing field: " + missingField))
+                            : Mono.just(u);
                 })
                 .flatMap(u -> userRepository.findByEmail(u.getEmail())
-                        .flatMap(existingUser -> Mono.just(ResponseEntity.badRequest().body("User Already Exists")))
+                        .flatMap(existingUser -> Mono.error(new IllegalArgumentException("User Already Exists")))
                         .switchIfEmpty(Mono.defer(() -> {
                             u.setPassword(passwordEncoder.encode(u.getPassword()));
-                            return userRepository.save(u)
-                                    .map(savedUser -> ResponseEntity.ok("User Successfully Registered"));
+                            return userRepository.save(u).map(this::convertToDTO);
                         })))
-                .onErrorResume(e -> Mono.just(ResponseEntity.badRequest().body(e.getMessage())));
+                .cast(UserDTO.class)  // Ensures correct return type
+                .onErrorResume(e -> Mono.error(new RuntimeException("Registration failed: " + e.getMessage())));
     }
 
-    public Mono<ResponseEntity<String>> registerAdmin(User request) {
+    /**
+     * Registers a new admin and creates a unique client.
+     */
+    public Mono<UserDTO> registerAdmin(User request) {
         return userRepository.findByEmail(request.getEmail())
-                .flatMap(existingUser -> Mono.just(ResponseEntity.badRequest().body("User Already Exists")))
-                .switchIfEmpty(
-                        ClientUtil.generateUniqueCode(request.getEmail(), clientRepository)
-                                .flatMap(clientCode -> {
-                                    Client newClient = new Client(clientCode);
-                                    return clientRepository.save(newClient)
-                                            .flatMap(savedClient -> {
-                                                User admin = new User(
-                                                        request.getFirstName(),
-                                                        request.getLastName(),
-                                                        request.getEmail(),
-                                                        passwordEncoder.encode(request.getPassword()),
-                                                        "ADMIN",
-                                                        savedClient.getCode(),
-                                                        savedClient.getId()
-                                                );
-                                                return userRepository.save(admin)
-                                                        .map(savedUser -> ResponseEntity.ok("Admin Successfully Registered"));
-                                            });
-                                })
-                )
+                .flatMap(existingUser -> Mono.error(new IllegalArgumentException("User Already Exists")))
+                .switchIfEmpty(ClientUtil.generateUniqueCode(request.getEmail(), clientRepository)
+                        .flatMap(clientCode -> {
+                            Client newClient = new Client(clientCode);
+                            return clientRepository.save(newClient)
+                                    .flatMap(savedClient -> {
+                                        User admin = new User(
+                                                request.getFirstName(),
+                                                request.getLastName(),
+                                                request.getEmail(),
+                                                passwordEncoder.encode(request.getPassword()),
+                                                "ADMIN",
+                                                savedClient.getCode(),
+                                                savedClient.getId()
+                                        );
+                                        return userRepository.save(admin)
+                                                .map(this::convertToDTO)
+                                                .cast(UserDTO.class);  // ✅ Ensures return type is Mono<UserDTO>
+                                    });
+                        }))
                 .timeout(Duration.ofSeconds(10))
-                .onErrorResume(e -> Mono.just(ResponseEntity.internalServerError().body("Unexpected error occurred!")));
+                .onErrorResume(e -> Mono.error(new RuntimeException("Admin registration failed: " + e.getMessage())))
+                .cast(UserDTO.class);  // ✅ Ensures final return type is Mono<UserDTO>
     }
 
+
+    /**
+     * Authenticates a user and generates a JWT token.
+     */
     public Mono<LoginResponseDTO> login(User user) {
         return userRepository.findByEmail(user.getEmail())
                 .filter(foundUser -> passwordEncoder.matches(user.getPassword(), foundUser.getPassword()))
@@ -98,20 +107,63 @@ public class UserService {
                 .switchIfEmpty(Mono.error(new RuntimeException("Invalid credentials")));
     }
 
+    /**
+     * Retrieves all users for a given client.
+     */
     public Flux<UserDTO> getAllUsers(String clientCode) {
-        return userRepository.findAllByClientCode(clientCode)
+        return ReactiveSecurityContextHolder.getContext()
+                .map(context -> context.getAuthentication().getName()) // ✅ Get the current user's email reactively
+                .flatMapMany(email -> userRepository.findAllByClientCode(clientCode))
                 .map(this::convertToDTO);
     }
 
+    /**
+     * Retrieves a single user by ID.
+     */
     public Mono<UserDTO> getUserById(Long id) {
         return userRepository.findById(String.valueOf(id))
+                .map(this::convertToDTO)
+                .switchIfEmpty(Mono.error(new RuntimeException("User not found")));
+    }
+
+    /**
+     * Updates a user by ID.
+     */
+    public Mono<UserDTO> updateUser(Long id, User user) {
+        return userRepository.findById(String.valueOf(id))
+                .flatMap(existingUser -> {
+                    existingUser.setFirstName(user.getFirstName());
+                    existingUser.setLastName(user.getLastName());
+                    existingUser.setEmail(user.getEmail());
+                    existingUser.setRole(user.getRole());
+
+                    return userRepository.save(existingUser);
+                })
                 .map(this::convertToDTO);
     }
 
+    /**
+     * Deletes a user by ID.
+     */
     public Mono<Boolean> deleteUser(Long id) {
-        return userRepository.deleteById(String.valueOf(id)).then(Mono.just(true));
+        return userRepository.findById(String.valueOf(id))
+                .flatMap(existingUser -> userRepository.delete(existingUser).thenReturn(true))
+                .switchIfEmpty(Mono.error(new RuntimeException("User not found")))
+                .onErrorResume(e -> Mono.error(new RuntimeException("Delete failed: " + e.getMessage())));
     }
 
+    /**
+     * Finds a user by email.
+     */
+    public Mono<UserDTO> findByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .map(this::convertToDTO)
+                .switchIfEmpty(Mono.error(new RuntimeException("User not found")));
+    }
+
+    /**
+     * Converts a User entity to a UserDTO.
+     */
     private UserDTO convertToDTO(User user) {
         return new UserDTO(
                 user.getId(),
