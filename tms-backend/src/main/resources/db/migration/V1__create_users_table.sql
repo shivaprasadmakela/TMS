@@ -1,5 +1,5 @@
 -- Create Database
-CREATE DATABASE tms_storage;
+CREATE DATABASE tms;
 
 -- Create Clients Table
 CREATE TABLE clients (

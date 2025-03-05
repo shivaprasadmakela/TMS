@@ -82,7 +82,7 @@ public class UserService {
                 .filter(foundUser -> passwordEncoder.matches(user.getPassword(), foundUser.getPassword()))
                 .map(foundUser -> {
                     String token = jwtUtil.generateToken(foundUser.getEmail(), foundUser.getRole(), foundUser.getClientCode());
-                    Long expiresAt = jwtUtil.getExpirationTime();
+//                    Long expiresAt = jwtUtil.getExpirationDate(token).getTime();
 
                     return new LoginResponseDTO(
                             foundUser.getEmail(),
@@ -91,8 +91,8 @@ public class UserService {
                             foundUser.getRole(),
                             foundUser.getClientCode(),
                             foundUser.getClientId(),
-                            token,
-                            expiresAt
+                            token
+//                            expiresAt
                     );
                 })
                 .switchIfEmpty(Mono.error(new RuntimeException("Invalid credentials")));
@@ -112,12 +112,11 @@ public class UserService {
         return userRepository.deleteById(String.valueOf(id)).then(Mono.just(true));
     }
 
-    // ✅ Convert User to DTO (Fixing the incorrect constructor usage)
     private UserDTO convertToDTO(User user) {
         return new UserDTO(
-                user.getId(),           // ✅ Added ID field
-                user.getFirstName(),    // ✅ Ensure User entity has getFirstName()
-                user.getLastName(),     // ✅ Ensure User entity has getLastName()
+                user.getId(),
+                user.getFirstName(),
+                user.getLastName(),
                 user.getEmail(),
                 user.getRole(),
                 user.getClientCode(),

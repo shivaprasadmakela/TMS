@@ -15,5 +15,5 @@ public class LoginResponseDTO {
     private String clientCode;
     private Long clientId;
     private String token;
-    private Long expiresAt;
+//    private Long expiresAt;
 }
