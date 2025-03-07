@@ -34,6 +34,10 @@ public class JwtUtil {
         return extractClaim(token, Claims::getSubject);
     }
 
+    public static long getExpirationTime() {
+        return EXPIRATION_TIME;
+    }
+
     public String extractRole(String token) {
         return (String) getClaims(token).get("role");
     }
@@ -42,7 +46,7 @@ public class JwtUtil {
         try {
             return getClaims(token).getExpiration().after(new Date());
         } catch (Exception e) {
-            return false; // Invalid token
+            return false;
         }
     }
 

@@ -1,6 +1,7 @@
 package com.tms.tms_backend.controller;
 
 import com.tms.tms_backend.dto.UserDTO;
+import com.tms.tms_backend.model.Project;
 import com.tms.tms_backend.model.User;
 import com.tms.tms_backend.service.UserService;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +10,8 @@ import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("api/users")
@@ -50,7 +53,6 @@ public class UserController {
     }
 
     @GetMapping("/profile")
-    @PreAuthorize("hasRole('USER')")
     public Mono<ResponseEntity<UserDTO>> getProfile() {
         return ReactiveSecurityContextHolder.getContext()
                 .map(context -> (String) context.getAuthentication().getPrincipal())
@@ -58,4 +60,20 @@ public class UserController {
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
+
+    @PostMapping("/{userId}/add-project/{projectId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public Mono<ResponseEntity<String>> addProjectToUser(@PathVariable String userId, @PathVariable String projectId) {
+        return userService.addProjectToUser(userId, projectId)
+                .map(user -> ResponseEntity.ok("Project assigned successfully to user!"))
+                .defaultIfEmpty(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{id}/projects")
+    public Mono<ResponseEntity<List<Project>>> getUserProjects(@PathVariable String id) {
+        return userService.getAllProjectsForUser(id)
+                .map(ResponseEntity::ok)
+                .defaultIfEmpty(ResponseEntity.notFound().build());
+    }
+
 }

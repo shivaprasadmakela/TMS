@@ -1,11 +1,13 @@
 package com.tms.tms_backend.service;
 
-import com.tms.tms_backend.dto.LoginResponseDTO;
+import com.tms.tms_backend.dto.LoginResponse;
 import com.tms.tms_backend.dto.UserDTO;
 import com.tms.tms_backend.model.Client;
+import com.tms.tms_backend.model.Project;
 import com.tms.tms_backend.model.User;
 import com.tms.tms_backend.repository.ClientRepository;
 import com.tms.tms_backend.repository.UserRepository;
+import com.tms.tms_backend.repository.ProjectRepository;
 import com.tms.tms_backend.util.ClientUtil;
 import com.tms.tms_backend.util.JwtUtil;
 import com.tms.tms_backend.util.UserUtil;
@@ -16,6 +18,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -23,12 +28,14 @@ public class UserService {
     private final ClientRepository clientRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final ProjectRepository projectRepository;
 
-    public UserService(UserRepository userRepository, ClientRepository clientRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
+    public UserService(UserRepository userRepository, ClientRepository clientRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil, ProjectRepository projectRepository) {
         this.userRepository = userRepository;
         this.clientRepository = clientRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
+        this.projectRepository = projectRepository;
     }
 
     public Mono<UserDTO> register(User user) {
@@ -45,7 +52,7 @@ public class UserService {
                             u.setPassword(passwordEncoder.encode(u.getPassword()));
                             return userRepository.save(u).map(this::convertToDTO);
                         })))
-                .cast(UserDTO.class)  // Ensures correct return type
+                .cast(UserDTO.class)
                 .onErrorResume(e -> Mono.error(new RuntimeException("Registration failed: " + e.getMessage())));
     }
 
@@ -79,32 +86,24 @@ public class UserService {
 
 
 
-    public Mono<LoginResponseDTO> login(User user) {
+    public Mono<LoginResponse> login(User user) {
         return userRepository.findByEmail(user.getEmail())
                 .filter(foundUser -> passwordEncoder.matches(user.getPassword(), foundUser.getPassword()))
                 .map(foundUser -> {
+                    long expirationTime = System.currentTimeMillis() + JwtUtil.getExpirationTime(); // Use constant
                     String token = jwtUtil.generateToken(foundUser.getEmail(), foundUser.getRole(), foundUser.getClientCode());
-//                    Long expiresAt = jwtUtil.getExpirationDate(token).getTime();
-
-                    return new LoginResponseDTO(
-                            foundUser.getEmail(),
-                            foundUser.getFirstName(),
-                            foundUser.getLastName(),
-                            foundUser.getRole(),
-                            foundUser.getClientCode(),
-                            foundUser.getClientId(),
-                            token
-//                            expiresAt
-                    );
+                    return new LoginResponse(convertToDTO(foundUser), token, expirationTime);
                 })
                 .switchIfEmpty(Mono.error(new RuntimeException("Invalid credentials")));
     }
 
+
     public Flux<UserDTO> getAllUsers(String clientCode) {
         return ReactiveSecurityContextHolder.getContext()
-                .map(context -> context.getAuthentication().getName()) // ✅ Get the current user's email reactively
+                .map(context -> context.getAuthentication().getName())
                 .flatMapMany(email -> userRepository.findAllByClientCode(clientCode))
-                .map(this::convertToDTO);
+                .map(this::convertToDTO)
+                .switchIfEmpty(Mono.error(new RuntimeException("User not found")));
     }
 
 
@@ -153,7 +152,38 @@ public class UserService {
                 user.getRole(),
                 user.getClientCode(),
                 user.getClientId(),
-                user.getCreatedAt()
+                user.getCreatedAt(),
+                user.getProjectIds()
         );
     }
+
+    public Mono<User> addProjectToUser(String userId, String projectId) {
+        return userRepository.findById(userId)
+                .flatMap(user -> {
+                    if (user.getProjectIds() == null) {
+                        user.setProjectIds(new ArrayList<>());
+                    }
+                    if (!user.getProjectIds().contains(projectId)) {
+                        user.getProjectIds().add(projectId);
+                        return userRepository.save(user);
+                    }
+                    return Mono.just(user);
+                });
+    }
+
+    public Mono<List<Project>> getAllProjectsForUser(String userId) {
+        return userRepository.findById(userId)
+                .flatMap(user -> {
+                    List<String> projectIds = user.getProjectIds();
+                    if (projectIds == null || projectIds.isEmpty()) {
+                        return Mono.just(List.of());
+                    }
+                    return projectRepository.findAllById(projectIds)
+                            .collectList()
+                            .map(projects -> projects.stream()
+                                    .map(project -> new Project(project.getId(), project.getName(), project.getDescription(), project.getManagerId()))
+                                    .collect(Collectors.toList()));
+                });
+    }
+
 }
