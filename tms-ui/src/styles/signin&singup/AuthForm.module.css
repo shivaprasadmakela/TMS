@@ -1,0 +1,88 @@
+.authContainer{
+    display: flex;
+    flex-direction: row;
+    height: 100vh;
+    background-color: #ffffff;
+}
+
+.authForm{
+ display: flex;
+ flex-direction: column;
+ width: 100%;
+    justify-content: center;
+    align-items: center;
+}
+
+.title{
+    font-size: 35px;
+    font-weight: bold;
+
+}
+p{
+    font-size: 15px;
+    text-align: center;
+    color: #4B5563;
+    line-height: 1.5;
+    margin-top: -10px;
+}
+
+a{
+    color: #2B44E7;
+    font-weight: bold;
+    text-decoration: none;
+    margin: 8px;
+}
+
+h5{
+    color: #4B5563;
+    font-size: 15px;
+    margin-top: 200px;
+}
+.authFormContainer{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 60%;
+    height: 100%;
+    gap: 20px;
+}
+
+.formInput{
+    width: 40%;
+    height: 45px;
+    margin: 10px;
+    border-radius: 10px;
+    border: 1px solid #CBD5E1;
+    padding: 10px;
+}
+
+.formInput:focus{
+    outline: none;
+    border: 1px solid #2B44E7;
+}
+
+
+
+.mainImage{
+    width: 40%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 20px 0px 0px 20px;
+}
+
+.formButton{
+    width: 40%;
+    height: 45px;
+    margin: 10px;
+    border-radius: 10px;
+    background-color: #2B44E7;
+    color: white;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+}
+
+.formButton:hover{
+    background-color: #919dee;
+}

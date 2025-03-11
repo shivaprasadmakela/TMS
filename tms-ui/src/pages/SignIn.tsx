@@ -1,9 +1,11 @@
-const Signin = () => { 
-  return (
-    <div>
-      <h1>Signin</h1>
-    </div>
-  );
-}
+import AuthForm from "../components/AuthForm";
 
-export default Signin;
+const SignIn = () => {
+
+  const title ="Log in to your account";
+  const bottomText = "Don't have an account yet?";
+
+  return <AuthForm title={title} bottomText={bottomText} buttonText="SignIn" />;
+};
+
+export default SignIn;
