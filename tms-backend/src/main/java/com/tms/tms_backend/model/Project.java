@@ -14,13 +14,15 @@ public class Project {
     private String name;
     private String description;
     private String managerId;
+    private String clientCode;
     private Instant createdAt = Instant.now();
     private Instant updatedAt = Instant.now();
 
-    public Project(String id, String name, String description, String managerId) {
+    public Project(String id, String name, String description, String managerId, String clientCode) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.managerId = managerId;
+        this.clientCode = clientCode;
     }
 }

@@ -17,8 +17,8 @@ public class Task {
     private String description;
     private String assignee;
     private String status = "To Do"; // ["To Do", "In Progress", "Done"]
+    private String clientCode;
     private List<Comment> comments = new ArrayList<>();
     private Instant createdAt = Instant.now();
     private Instant updatedAt = Instant.now();
 }
-

@@ -22,6 +22,10 @@ public class ProjectService {
         return projectRepository.findAll();
     }
 
+    public Flux<Project> getAllProjectsByClient(String clientCode) {
+        return projectRepository.findAllByClientCode(clientCode);
+    }
+
     public Flux<Project> getProjectsByManager(String managerId) {
         return projectRepository.findByManagerId(managerId);
     }

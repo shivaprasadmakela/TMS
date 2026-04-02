@@ -36,9 +36,12 @@ public class ProjectController {
 
     @GetMapping()
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
-    public Mono<ResponseEntity<List<Project>>> getAllProjects() {
-        return projectService.getAllProjects()
-                .collectList()
+    public Mono<ResponseEntity<List<Project>>> getAllProjects(@RequestParam(required = false) String clientCode) {
+        Flux<Project> projects = (clientCode != null) 
+            ? projectService.getAllProjectsByClient(clientCode) 
+            : projectService.getAllProjects();
+            
+        return projects.collectList()
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }

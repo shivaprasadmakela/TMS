@@ -30,6 +30,12 @@ public class TaskController {
         return taskService.getTasksByProject(projectId);
     }
 
+    @GetMapping("/client/{clientCode}")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER', 'USER')")
+    public Flux<Task> getTasksByClient(@PathVariable String clientCode) {
+        return taskService.getTasksByClient(clientCode);
+    }
+
     @GetMapping("/assignee/{userId}")
     @PreAuthorize("hasAnyRole('ADMIN','MANAGER', 'USER')")
     public Flux<Task> getTasksByAssignee(@PathVariable String userId) {

@@ -181,7 +181,7 @@ public class UserService {
                     return projectRepository.findAllById(projectIds)
                             .collectList()
                             .map(projects -> projects.stream()
-                                    .map(project -> new Project(project.getId(), project.getName(), project.getDescription(), project.getManagerId()))
+                                    .map(project -> new Project(project.getId(), project.getName(), project.getDescription(), project.getManagerId(), project.getClientCode()))
                                     .collect(Collectors.toList()));
                 });
     }

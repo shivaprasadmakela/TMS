@@ -7,4 +7,5 @@ import reactor.core.publisher.Flux;
 public interface TaskRepository extends ReactiveMongoRepository<Task, String> {
     Flux<Task> findByProjectId(String projectId); // Get tasks by project
     Flux<Task> findByAssignee(String assignee); // Get tasks assigned to a user
+    Flux<Task> findAllByClientCode(String clientCode);
 }

@@ -23,6 +23,10 @@ public class TaskService {
         return taskRepository.save(task);
     }
 
+    public Flux<Task> getTasksByClient(String clientCode) {
+        return taskRepository.findAllByClientCode(clientCode);
+    }
+
     // ✅ Get all tasks in a project
     public Flux<Task> getTasksByProject(String projectId) {
         return taskRepository.findByProjectId(projectId);
